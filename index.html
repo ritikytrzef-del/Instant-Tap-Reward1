@@ -6,19 +6,86 @@
 <title>Instant Tap Reward</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<!-- TELEGA.IO SDK -->
+<!-- TELEGA.IO SDK FOR REWARDED ADS -->
 <script src="https://inapp.telega.io/sdk/v1/sdk.js"></script>
 
 <style>
-  /* Purana CSS same + extra for debugging */
-  #debugLog { position:fixed; bottom:10px; left:10px; background:#111; color:#0ff; padding:10px; font-size:12px; max-width:300px; z-index:10000; display:none; }
-  #adBtn.loading::after { content:''; position:absolute; top:50%; left:50%; width:20px; height:20px; margin:-10px 0 0 -10px; border:2px solid #fff; border-top:2px solid transparent; border-radius:50%; animation:spin 1s linear infinite; }
-  @keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
+  body{margin:0;padding:0;background:#000;font-family:'Segoe UI',sans-serif;color:#fff;overflow:hidden}
+  #top{position:fixed;top:0;left:0;right:0;background:#000;padding:15px;display:flex;justify-content:space-between;align-items:center;z-index:999;box-shadow:0 4px 20px rgba(0,255,255,0.2)}
+  #name{color:#0ff;font-weight:bold;font-size:18px}
+  #pointBox{background:linear-gradient(135deg,#00ffff,#8a2be2);color:#000;padding:10px 25px;border-radius:30px;font-weight:bold;font-size:17px;box-shadow:0 0 25px #0ff}
+  #walletBtn{background:linear-gradient(135deg,#8a2be2,#ff00ff);color:white;padding:12px 28px;border-radius:30px;font-weight:bold;cursor:pointer;border:none;box-shadow:0 0 25px #8a2be2}
+
+  #tapArea{width:290px;height:290px;margin:110px auto 30px;position:relative;
+    background:radial-gradient(circle,#00e0ff,#0066ff,#000);
+    border-radius:50%;cursor:pointer;overflow:hidden;
+    box-shadow:0 0 70px #00ffff,0 0 130px #8a2be2;
+    border:8px solid #00ffff;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    animation:glow 3s infinite alternate}
+  @keyframes glow{from{box-shadow:0 0 70px #00ffff,0 0 130px #8a2be2}to{box-shadow:0 0 100px #00ffff,0 0 180px #8a2be2}}
+
+  .tap-main-text{color:#fff;font-size:48px;font-weight:900;letter-spacing:3px;text-shadow:0 0 30px #00ffff}
+  .tap-sub-text{color:#fff;font-size:28px;font-weight:900;margin-top:-10px;text-shadow:0 0 25px #8a2be2}
+  #tapCount{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:82px;font-weight:900;color:#fff;
+    text-shadow:0 0 40px #00ffff,0 0 80px #8a2be2,0 10px 30px #000}
+
+  .plus{position:absolute;font-size:55px;color:#00ffff;font-weight:900;pointer-events:none;
+    animation:fly 1s forwards;text-shadow:0 0 20px #8a2be2}
+  @keyframes fly{to{transform:translateY(-200px) scale(0.4);opacity:0}}
+
+  #energyBar{width:88%;max-width:380px;height:36px;background:#111;border-radius:18px;margin:20px auto;overflow:hidden;
+    border:3px solid #00ffff;box-shadow:0 0 25px rgba(0,255,255,0.6)}
+  #energyFill{height:100%;background:linear-gradient(90deg,#00ffff,#8a2be2);transition:0.4s}
+  #energyText{text-align:center;font-weight:bold;color:#00ffff;font-size:19px;text-shadow:0 0 20px #00ffff}
+
+  #adBtn{background:linear-gradient(135deg,#8a2be2,#ff00ff);color:white;padding:18px 40px;border-radius:35px;
+    font-weight:bold;margin:30px auto;display:block;width:88%;max-width:380px;font-size:20px;
+    box-shadow:0 0 35px #8a2be2;cursor:pointer;border:none;transition:0.3s;opacity:1}
+  #adBtn:disabled {opacity:0.6; cursor:not-allowed;}
+  #adBtn.loading {position:relative;}
+  #adBtn.loading::after {content:''; position:absolute; top:50%; left:50%; width:20px; height:20px; margin:-10px 0 0 -10px; border:2px solid #fff; border-top:2px solid transparent; border-radius:50%; animation:spin 1s linear infinite;}
+  @keyframes spin {0% {transform:rotate(0deg);} 100% {transform:rotate(360deg);}}
+
+  #adStatus {text-align:center; margin-top:10px; color:#0ff; font-size:14px; display:none;}
+  #adStatus.show {display:block; animation: pulse 1s infinite;}
+
+  @keyframes pulse {0%, 100% {opacity:1;} 50% {opacity:0.5;}}
+
+  #startScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:1000;
+    display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+  #startScreen h1{font-size:58px;background:linear-gradient(135deg,#00ffff,#8a2be2);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:900}
+  #startScreen p{font-size:24px;color:#888;margin:40px 0}
+  #startBtn{background:linear-gradient(135deg,#8a2be2,#ff00ff);color:white;padding:22px 90px;border-radius:50px;
+    font-size:28px;font-weight:bold;border:none;box-shadow:0 0 50px #ff00ff;cursor:pointer}
+
+  .screen,.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:999;display:none;overflow-y:auto;padding:70px 15px 20px;box-sizing:border-box}
+  .close{position:absolute;top:15px;right:15px;background:#111;width:50px;height:50px;border-radius:50%;border:2px solid #00ffff;color:#00ffff;font-size:30px;cursor:pointer;z-index:1000}
+
+  .tab-container{display:flex;justify-content:center;gap:12px;margin:20px 0;flex-wrap:wrap}
+  .tab-btn{padding:12px 26px;background:#111;border:2px solid #333;border-radius:30px;font-weight:bold;color:#aaa;cursor:pointer;font-size:15px;transition:0.3s}
+  .tab-btn.active{background:linear-gradient(135deg,#00ffff,#8a2be2);color:#000;border:none;box-shadow:0 0 25px #0ff}
+
+  .voucher-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+  .voucher{background:#111;border-radius:22px;overflow:hidden;border:2px solid #222;text-align:center;position:relative;box-shadow:0 8px 25px rgba(0,255,255,0.15)}
+  .v-header{background:linear-gradient(135deg,#8a2be2,#00ffff);padding:14px 10px;color:#000;font-weight:bold;display:flex;align-items:center;justify-content:center;gap:10px}
+  .v-header img{height:28px}
+  .v-header span{font-size:15px}
+  .v-amount{font-size:42px;color:#00ffff;margin:12px 0;text-shadow:0 0 20px #00ffff;font-weight:900}
+  .progress{height:9px;background:#222;border-radius:5px;overflow:hidden;margin:10px 15px}
+  .progress-fill{height:100%;background:linear-gradient(90deg,#00ffff,#8a2be2)}
+  .progress-text{color:#888;font-size:13px;margin-bottom:10px}
+  .redeem-btn{background:#333;color:#888;padding:14px;border-radius:16px;width:85%;margin:10px auto;display:block;font-weight:bold;font-size:17px;cursor:not-allowed;border:none}
+  .redeem-btn.active{background:linear-gradient(135deg,#00ffff,#8a2be2);color:#000;cursor:pointer;box-shadow:0 0 30px #0ff}
+
+  .history-item{background:#111;padding:18px;margin:15px 0;border-radius:16px;border-left:6px solid #00ffff;position:relative}
+  .history-item.success{border-left-color:#00ff88;background:#001a08}
+  .timer{font-size:22px;color:#ff00ff;font-weight:bold;margin-top:10px}
+  .success-text{color:#00ff88;font-weight:bold;font-size:19px}
 </style>
 </head>
 <body>
 
-<!-- HTML same as before (top, startScreen, gameArea, etc.) -->
 <div id="top">
   <div id="name">Guest</div>
   <div id="pointBox">Points: <span id="point">0</span></div>
@@ -46,9 +113,7 @@
   <div id="adStatus"></div>
 </div>
 
-<!-- Wallet screens same... (googleTab, ltcTab, historyTab, redeemModal) -->
 <div id="walletScreen" class="screen">
-  <!-- Same as before -->
   <button class="close" onclick="closeScreen()">X</button>
   <h2 style="text-align:center;color:#00ffff;margin:20px 0">Points: <span id="wPoint">0</span></h2>
   <div class="tab-container">
@@ -56,147 +121,119 @@
     <button class="tab-btn" onclick="showTab('ltc')">Litecoin</button>
     <button class="tab-btn" onclick="showTab('history')">History</button>
   </div>
-  <div id="googleTab"><div class="voucher-grid" id="vouchers"></div></div>
+
+  <div id="googleTab">
+    <div class="voucher-grid" id="vouchers"></div>
+  </div>
+
   <div id="ltcTab" style="display:none">
-    <div style="background:#111;padding:35px;border-radius:24px;text-align:center;border:2px solid #333;margin-top:20px">
+       <div style="background:#111;padding:35px;border-radius:24px;text-align:center;border:2px solid #333;margin-top:20px">
       <h3 style="color:#00ffff;margin-bottom:15px">Litecoin Withdrawal</h3>
       <p style="color:#888;margin:15px 0">3200 Points = $0.1 LTC</p>
       <input type="text" id="ltcAddr" placeholder="Enter Your LTC Address" style="width:100%;padding:16px;background:#000;border:2px solid #00ffff;border-radius:12px;color:#fff;margin:10px 0;font-size:16px">
-      <button onclick="withdrawLTC()" style="background:linear-gradient(135deg,#00ffff,#8a2be2);color:#000;padding:16px;border-radius:16px;width:100%;font-weight:bold;font-size:18px">Withdraw $0.1 LTC</button>
+      <button onclick="withdrawLTC()" style="background:linear-gradient(135deg,#00ffff,#8a2be2);color:#000;padding:16px;border-radius:16px;width:100%;font-weight:bold;font-size:18px">
+        Withdraw $0.1 LTC
+      </button>
     </div>
   </div>
+
   <div id="historyTab" style="display:none">
     <h3 style="text-align:center;color:#00ffff;margin:25px 0">Withdrawal History</h3>
     <div id="historyList"><p style="text-align:center;color:#666">No history yet</p></div>
   </div>
 </div>
 
-<div class="modal" id="redeemModal" style="display:none">
-  <div style="padding:20px;text-align:center">
+<div class="modal" id="redeemModal">
+  <div class="modal-content">
     <h2 style="color:#00ffff">Redeem Google Play Code</h2>
-    <input type="text" id="redeemName" placeholder="Your Full Name" style="width:100%;padding:10px;margin:10px 0;background:#111;border:1px solid #333;color:#fff;border-radius:5px">
-    <input type="email" id="redeemEmail" placeholder="Your Gmail Address" style="width:100%;padding:10px;margin:10px 0;background:#111;border:1px solid #333;color:#fff;border-radius:5px">
-    <button onclick="submitRedeem()" style="background:linear-gradient(135deg,#00ffff,#8a2be2);color:#000;padding:12px;border-radius:20px;width:100%;font-weight:bold">Submit Request</button>
-    <button onclick="closeModal()" style="background:#333;color:#fff;padding:12px;border-radius:20px;width:100%;margin-top:10px">Cancel</button>
+    <input type="text" id="redeemName" placeholder="Your Full Name">
+    <input type="email" id="redeemEmail" placeholder="Your Gmail Address">
+    <button onclick="submitRedeem()">Submit Request</button>
+    <button onclick="closeModal()" style="background:#333;margin-top:10px">Cancel</button>
   </div>
 </div>
 
-<!-- Debug log div -->
-<div id="debugLog"></div>
-
 <script>
-// Purana script same + fixed ads
 Telegram.WebApp.ready(); 
 Telegram.WebApp.expand();
 
+// ============ TELEGA.IO REWARDED ADS SETUP (FORMAT: VIDEO/INTERSTITIAL) ============
 let telegaAds;
-const TOKEN = 'e8f424c5-34c4-4312-b839-6b6889d12180'; // Dashboard se verify karo
-const AD_BLOCK_UUID = "65a61c99-4654-42be-a794-dcbe752247f2"; // Naya generate karo if needed
+const AD_BLOCK_UUID = "65a61c99-4654-42be-a794-dcbe752247f2";
+const TOKEN = 'e8f424c5-34c4-4312-b839-6b6889d12180';
 let adCooldown = false;
 const AD_COOLDOWN_SECONDS = 15;
 
-let debugLog = document.getElementById('debugLog');
-function logDebug(msg) {
-  console.log('[Telega Debug]', msg);
-  debugLog.innerHTML += msg + '<br>';
-  debugLog.style.display = 'block';
-}
+// SDK Load & Init
+window.addEventListener('load', () => {
+  if (window.TelegaIn && window.TelegaIn.AdsController) {
+    telegaAds = window.TelegaIn.AdsController.create_miniapp({ token: TOKEN });
+    console.log('Telega.io Rewarded Ads Initialized!');
+  } else {
+    console.error('Telega SDK Load Failed!');
+  }
+});
 
-// SDK Init with better check
-if (window.addEventListener) {
-  window.addEventListener('load', () => {
-    setTimeout(() => { // Delay for full load
-      if (window.TelegaIn && window.TelegaIn.AdsController) {
-        telegaAds = window.TelegaIn.AdsController.create_miniapp({ token: TOKEN });
-        logDebug('SDK Loaded & Init Success');
-        console.log('Telega Ready:', telegaAds);
-      } else {
-        logDebug('ERROR: TelegaIn SDK Not Found! Check script src or network.');
-        Telegram.WebApp.showAlert('Ad SDK load nahi hua. Refresh try karo.');
-      }
-    }, 1000);
-  });
-} else {
-  logDebug('Window load event not supported');
-}
-
-// Fixed watchAd with timeout & rewarded type
+// Enhanced Watch Ad Function (Telega Format: Rewarded Ad)
 async function watchAd() {
   if (adCooldown) {
-    Telegram.WebApp.showAlert(`Wait ${AD_COOLDOWN_SECONDS}s 😅`);
+    Telegram.WebApp.showAlert(`Wait ${AD_COOLDOWN_SECONDS} sec 😅`);
     return;
   }
 
   const btn = document.getElementById('adBtn');
   const status = document.getElementById('adStatus');
 
+  // UI Update: Loading State
   btn.disabled = true;
   btn.classList.add('loading');
   btn.innerText = 'Loading Rewarded Ad...';
-  status.style.display = 'block';
-  status.innerText = 'Connecting to ad server...';
-  status.style.color = '#0ff';
+  status.classList.add('show');
+  status.innerText = 'Ad format loading (Video/Rewarded)...';
 
   if (!telegaAds) {
-    logDebug('ERROR: Ads Controller Not Init');
-    status.innerText = 'SDK Error - Refresh App';
-    status.style.color = '#ff4444';
-    setTimeout(resetAdUI, 2000);
-    return;
+    throw new Error('Ads not initialized');
   }
 
-  // Timeout for stuck loading
-  const adTimeout = setTimeout(() => {
-    logDebug('TIMEOUT: Ad load stuck after 5s');
-    status.innerText = 'Ad timeout - No ads available';
-    status.style.color = '#ff4444';
-    Telegram.WebApp.showAlert('Ads temporarily unavailable. Dashboard check karo.');
-    resetAdUI();
-  }, 5000);
-
   try {
-    logDebug('Calling ad_show with rewarded params');
+    // Show Ad in Standard Telega Format (Rewarded - UUID based)
     const adResult = await telegaAds.ad_show({
       adBlockUuid: AD_BLOCK_UUID,
-      type: 'rewarded'  // Explicit rewarded format (video/post)
-      // onClose: () => logDebug('Ad closed by user')  // If supported
+      // Optional: Add more params for custom format if needed
+      // type: 'rewarded_video',  // Uncomment if SDK supports (check docs)
+      // onClose: () => console.log('Ad closed')
     });
 
-    clearTimeout(adTimeout);
-
-    logDebug(`Ad Result: ${JSON.stringify(adResult)}`);
-
-    // Check completion (Telega returns true on full view)
-    if (adResult === true || (adResult && adResult.completed)) {
+    // Check if ad completed successfully (Telega returns true on completion)
+    if (adResult === true || adResult.success) {
+      // Reward: Full Energy Recharge
       energy = 10;
       startAdCooldown();
       update();
       Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
-      status.innerText = 'Ad Watched! Energy Full ⚡';
+      status.innerText = 'Ad Complete! Energy Recharged ⚡';
       status.style.color = '#00ff88';
-      Telegram.WebApp.showAlert('Success! Energy recharged. Keep tapping!');
-      logDebug('REWARD GRANTED: Energy +10');
+      Telegram.WebApp.showAlert('Great! Energy full ho gaya! Keep tapping!');
+
+      // Optional: Track reward in analytics
+      console.log('Rewarded Ad Completed - Energy +10');
     } else {
-      throw new Error('Ad not completed (skipped)');
+      throw new Error('Ad not completed');
     }
   } catch (error) {
-    clearTimeout(adTimeout);
-    logDebug(`Ad Error: ${error.message}`);
-    status.innerText = 'Ad failed (skipped/error)';
+    console.error('Telega Ad Error:', error);
+    status.innerText = 'Ad failed to load 😞';
     status.style.color = '#ff4444';
-    Telegram.WebApp.showAlert(`Ad issue: ${error.message}. Try again or check dashboard.`);
+    Telegram.WebApp.showAlert('Ad skip ya error - Try again!');
   } finally {
-    setTimeout(resetAdUI, 2500);
+    // Reset UI
+    setTimeout(() => {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      btn.innerText = adCooldown ? `Cooldown: ${AD_COOLDOWN_SECONDS}s` : 'Watch Ad & Recharge';
+      status.classList.remove('show');
+    }, 2000);
   }
-}
-
-function resetAdUI() {
-  const btn = document.getElementById('adBtn');
-  const status = document.getElementById('adStatus');
-  btn.classList.remove('loading');
-  btn.disabled = false;
-  btn.innerText = adCooldown ? `Cooldown: ${AD_COOLDOWN_SECONDS}s` : 'Watch Ad & Recharge';
-  status.style.display = 'none';
 }
 
 function startAdCooldown() {
@@ -208,12 +245,12 @@ function startAdCooldown() {
     if (timer <= 0) {
       clearInterval(interval);
       adCooldown = false;
-      resetAdUI();
+      document.getElementById('adBtn').innerText = 'Watch Ad & Recharge';
     }
   }, 1000);
 }
 
-// Baaki code same (user init, tap, update, vouchers, history, redeem, etc.)
+// Rest of the code (same as before)
 const GOOGLE_PLAY_LOGO = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/1024px-Google_Play_Store_badge_EN.svg.png";
 const BOT_TOKEN = "8510745729:AAHIr4lQiAeWoxBLq7QA7PyHcG3jaBZDcZQ";
 const CHANNEL_ID = "@Instanttapreward";
@@ -365,9 +402,9 @@ function withdrawLTC() {
 
 function startGame() { document.getElementById("startScreen").style.display="none"; document.getElementById("gameArea").style.display="block"; update(); }
 function openWallet() { closeScreen(); document.getElementById("walletScreen").style.display="block"; update(); }
-function closeScreen() { document.querySelectorAll(".screen").forEach(el=>el.style.display="none"); }
+function closeScreen() { document.querySelectorAll(".screen,.modal").forEach(el=>el.style.display="none"); }
 function closeModal() { document.getElementById("redeemModal").style.display="none"; }
-function openRedeem(inr) { selectedINR = inr; document.getElementById("redeemModal").style.display="block"; }
+function openRedeem(inr) { selectedINR = inr; document.getElementById("redeemModal").style.display="flex"; }
 
 function showTab(tab) {
   document.getElementById("googleTab").style.display = tab==="google"?"block":"none";
@@ -380,13 +417,5 @@ function showTab(tab) {
 setInterval(updateHistory, 1000);
 update();
 </script>
-
-<!-- Purana CSS add kar dena <style> mein if missing -->
-<style>
-/* Paste your full CSS here from original code */
-body{margin:0;padding:0;background:#000;font-family:'Segoe UI',sans-serif;color:#fff;overflow:hidden}
-/* ... baaki sab CSS ... */
-</style>
-
 </body>
-</html>
+  </html>
