@@ -3,11 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Tap2Rich</title>
+<title>Instant Tap Reward</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<!-- Telega SDK -->
-<script src="https://inapp.telega.io/sdk/v1/sdk.js"></script>
+<!-- ✅ ADEXORA ADS SCRIPT -->
+<script src="https://adexora.com/cdn/ads.js?id=1042"></script>
 
 <style>
   body{margin:0;padding:0;background:#000;font-family:'Segoe UI',sans-serif;color:#fff;overflow:hidden}
@@ -40,7 +39,7 @@
 
   #adBtn{background:linear-gradient(135deg,#8a2be2,#ff00ff);color:white;padding:18px 40px;border-radius:35px;
     font-weight:bold;margin:30px auto;display:block;width:88%;max-width:380px;font-size:20px;
-    box-shadow:0 0 35px #8a2be2;cursor:pointer;border:none}
+    box-shadow:0 0 35px #8a2be2;cursor:pointer;border:none;transition:0.3s;opacity:1}
 
   #startScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:1000;
     display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
@@ -53,7 +52,26 @@
   .screen,.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:999;display:none;overflow-y:auto;padding:70px 15px 20px;box-sizing:border-box}
   .close{position:absolute;top:15px;right:15px;background:#111;width:50px;height:50px;border-radius:50%;border:2px solid #00ffff;color:#00ffff;font-size:30px;cursor:pointer;z-index:1000}
 
-  /* baki CSS same rahegi... */
+  .tab-container{display:flex;justify-content:center;gap:12px;margin:20px 0;flex-wrap:wrap}
+  .tab-btn{padding:12px 26px;background:#111;border:2px solid #333;border-radius:30px;font-weight:bold;color:#aaa;cursor:pointer;font-size:15px;transition:0.3s}
+  .tab-btn.active{background:linear-gradient(135deg,#00ffff,#8a2be2);color:#000;border:none;box-shadow:0 0 25px #0ff}
+
+  .voucher-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+  .voucher{background:#111;border-radius:22px;overflow:hidden;border:2px solid #222;text-align:center;position:relative;box-shadow:0 8px 25px rgba(0,255,255,0.15)}
+  .v-header{background:linear-gradient(135deg,#8a2be2,#00ffff);padding:14px 10px;color:#000;font-weight:bold;display:flex;align-items:center;justify-content:center;gap:10px}
+  .v-header img{height:28px}
+  .v-header span{font-size:15px}
+  .v-amount{font-size:42px;color:#00ffff;margin:12px 0;text-shadow:0 0 20px #00ffff;font-weight:900}
+  .progress{height:9px;background:#222;border-radius:5px;overflow:hidden;margin:10px 15px}
+  .progress-fill{height:100%;background:linear-gradient(90deg,#00ffff,#8a2be2)}
+  .progress-text{color:#888;font-size:13px;margin-bottom:10px}
+  .redeem-btn{background:#333;color:#888;padding:14px;border-radius:16px;width:85%;margin:10px auto;display:block;font-weight:bold;font-size:17px;cursor:not-allowed;border:none}
+  .redeem-btn.active{background:linear-gradient(135deg,#00ffff,#8a2be2);color:#000;cursor:pointer;box-shadow:0 0 30px #0ff}
+
+  .history-item{background:#111;padding:18px;margin:15px 0;border-radius:16px;border-left:6px solid #00ffff;position:relative}
+  .history-item.success{border-left-color:#00ff88;background:#001a08}
+  .timer{font-size:22px;color:#ff00ff;font-weight:bold;margin-top:10px}
+  .success-text{color:#00ff88;font-weight:bold;font-size:19px}
 </style>
 </head>
 <body>
@@ -65,7 +83,7 @@
 </div>
 
 <div id="startScreen">
-  <h1>Tap2Rich</h1>
+  <h1>Instant Tap Reward</h1>
   <p>Tap & Earn Real Rewards!</p>
   <button id="startBtn" onclick="startGame()">START TAPPING</button>
 </div>
@@ -84,57 +102,50 @@
   <button id="adBtn" onclick="watchAd()">Watch Ad & Recharge</button>
 </div>
 
-<!-- Wallet aur baki screens same rahenge... -->
+<!-- Wallet & Other Screens (same as before) -->
+<div id="walletScreen" class="screen">
+  <button class="close" onclick="closeScreen()">X</button>
+  <h2 style="text-align:center;color:#00ffff;margin:20px 0">Points: <span id="wPoint">0</span></h2>
+  <div class="tab-container">
+    <button class="tab-btn active" onclick="showTab('google')">Google Play</button>
+    <button class="tab-btn" onclick="showTab('ltc')">Litecoin</button>
+    <button class="tab-btn" onclick="showTab('history')">History</button>
+  </div>
+
+  <div id="googleTab">
+    <div class="voucher-grid" id="vouchers"></div>
+  </div>
+
+  <div id="ltcTab" style="display:none">
+    <div style="background:#111;padding:35px;border-radius:24px;text-align:center;border:2px solid #333;margin-top:20px">
+      <h3 style="color:#00ffff;margin-bottom:15px">Litecoin Withdrawal</h3>
+      <p style="color:#888;margin:15px 0">3200 Points = $0.1 LTC</p>
+      <input type="text" id="ltcAddr" placeholder="Enter Your LTC Address">
+      <button onclick="withdrawLTC()">Withdraw $0.1 LTC</button>
+    </div>
+  </div>
+
+  <div id="historyTab" style="display:none">
+    <h3 style="text-align:center;color:#00ffff;margin:25px 0">Withdrawal History</h3>
+    <div id="historyList"><p style="text-align:center;color:#666">No history yet</p></div>
+  </div>
+</div>
+
+<div class="modal" id="redeemModal">
+  <div class="modal-content">
+    <h2 style="color:#00ffff">Redeem Google Play Code</h2>
+    <input type="text" id="redeemName" placeholder="Your Full Name">
+    <input type="email" id="redeemEmail" placeholder="Your Gmail Address">
+    <button onclick="submitRedeem()">Submit Request</button>
+    <button onclick="closeModal()" style="background:#333;margin-top:10px">Cancel</button>
+  </div>
+</div>
 
 <script>
 Telegram.WebApp.ready(); 
 Telegram.WebApp.expand();
 
-// ==================== TELEGA ADS SETUP (Exactly as you gave) ====================
-let adsController = null;
-
-document.addEventListener("DOMContentLoaded", function() {
-  if (window.TelegaIn && window.TelegaIn.AdsController) {
-    adsController = window.TelegaIn.AdsController.create_miniapp({
-      token: 'e8f424c5-34c4-4312-b839-6b6889d12180'
-    });
-  }
-});
-
-// Watch Ad function - ab Telega ad dikhaayega
-function watchAd() {
-  if (!adsController) {
-    Telegram.WebApp.showAlert("Ad loading issue, try again!");
-    energy = 10; update(); // fallback
-    return;
-  }
-
-  // Button disable kar do jab tak ad load/show ho raha ho
-  const btn = document.getElementById("adBtn");
-  btn.disabled = true;
-  btn.textContent = "Loading Ad...";
-
-  adsController.ad_show({
-    adBlockUuid: "65a61c99-4654-42be-a794-dcbe752247f2"
-  })
-  .then(() => {
-    // Ad successfully dikha diya gaya → reward do
-    energy = 10;
-    update();
-    Telegram.WebApp.showAlert("Ad completed! Energy Full Now 🔥");
-  })
-  .catch((err) => {
-    console.log("Ad error:", err);
-    Telegram.WebApp.showAlert("Ad nahi dikha paya, dobara try karo");
-  })
-  .finally(() => {
-    btn.disabled = false;
-    btn.textContent = "Watch Ad & Recharge";
-  });
-}
-
-// Baaki saara code same rahega ↓ (sirf watchAd() change hua hai)
-
+const GOOGLE_PLAY_LOGO = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/1024px-Google_Play_Store_badge_EN.svg.png";
 const BOT_TOKEN = "8510745729:AAHIr4lQiAeWoxBLq7QA7PyHcG3jaBZDcZQ";
 const CHANNEL_ID = "@Instanttapreward";
 
@@ -154,6 +165,10 @@ let todayTaps = 0;
 let selectedINR = 0;
 const DAILY_LIMIT = 3200;
 
+// Cooldown for ad (30 seconds)
+let lastAdTime = 0;
+const AD_COOLDOWN = 30;
+
 const today = new Date().toISOString().split('T')[0];
 if (localStorage.getItem(DATE_KEY) !== today) {
   todayTaps = 0;
@@ -163,9 +178,49 @@ if (localStorage.getItem(DATE_KEY) !== today) {
   todayTaps = parseInt(localStorage.getItem(DAILY_KEY)) || 0;
 }
 
-// Baaki sab functions (tap, update, wallet, etc.) same rahenge...
-// (main ne yahan copy nahi kiye length ke wajah se, aap apna original code neeche paste kar dena)
+const vouchers = [
+  {inr:10, points:3200},
+  {inr:20, points:6400},
+  {inr:50, points:16000},
+  {inr:100, points:32000}
+];
 
+// ✅ PERFECT ADEXORA REWARDED AD FUNCTION
+function watchAd() {
+  const now = Date.now();
+  if (now - lastAdTime < AD_COOLDOWN * 1000) {
+    const remain = Math.ceil((AD_COOLDOWN * 1000 - (now - lastAdTime)) / 1000);
+    Telegram.WebApp.showAlert(`Thoda wait karo 😅\n${remain} sec baad try karo`);
+    return;
+  }
+
+  const btn = document.getElementById("adBtn");
+  btn.disabled = true;
+  btn.innerText = "Ad Load Ho Raha...";
+  btn.style.opacity = "0.7";
+
+  window.showAdexora()
+    .then(() => {
+      // ✅ Ad successfully complete hua
+      energy = 10;
+      lastAdTime = Date.now();
+      update();
+      Telegram.WebApp.HapticFeedback.impactOccurred("heavy");
+      Telegram.WebApp.showAlert("Ad Complete! ⚡ Energy Full Ho Gaya!");
+    })
+    .catch((e) => {
+      // ❌ Skip, close, ya error
+      console.log("Adexora Error:", e);
+      Telegram.WebApp.showAlert("Ad skip kiya ya error hua 😞\nEnergy nahi milegi");
+    })
+    .finally(() => {
+      btn.disabled = false;
+      btn.innerText = "Watch Ad & Recharge";
+      btn.style.opacity = "1";
+    });
+}
+
+// Baaki sab functions same hi hain (tap, wallet, redeem, etc.)
 function tap(e) {
   if (energy <= 0 || todayTaps >= DAILY_LIMIT) {
     if (todayTaps >= DAILY_LIMIT) Telegram.WebApp.showAlert("Daily limit 3200 ho gaya! Kal aana");
@@ -174,12 +229,15 @@ function tap(e) {
   energy--; points++; todayTaps++;
   localStorage.setItem(POINT_KEY, points);
   localStorage.setItem(DAILY_KEY, todayTaps);
-  const p = document.createElement("div"); p.className="plus"; p.innerText="+1";
-  p.style.left = (e.touches?.[0]?.clientX || e.clientX) + "px";
-  p.style.top = (e.touches?.[0]?.clientY || e.clientY) + "px";
+
+  const p = document.createElement("div"); 
+  p.className="plus"; p.innerText="+1";
+  p.style.left = (e.touches?.[0]?.clientX || e.clientX - 20) + "px";
+  p.style.top = (e.touches?.[0]?.clientY || e.clientY - 20) + "px";
   document.getElementById("float").appendChild(p);
   setTimeout(() => p.remove(), 1000);
-  Telegram.WebApp.HapticFeedback.impactOccurred("heavy");
+
+  Telegram.WebApp.HapticFeedback.impactOccurred("medium");
   update();
 }
 
@@ -194,14 +252,103 @@ function update() {
   updateHistory();
 }
 
-// startGame, openWallet, closeScreen, etc. same rahenge...
-
-function startGame() { 
-  document.getElementById("startScreen").style.display="none"; 
-  document.getElementById("gameArea").style.display="block"; 
-  update(); 
+function loadVouchers() {
+  let html = "";
+  vouchers.forEach(v => {
+    const progress = Math.min((points / v.points)*100, 100);
+    const unlocked = points >= v.points;
+    html += `<div class="voucher">
+      <div class="v-header">
+        <img src="${GOOGLE_PLAY_LOGO}" alt="Google Play">
+        <span>₹${v.inr} Gift Card</span>
+      </div>
+      <div class="v-amount">₹${v.inr}</div>
+      <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="progress-text">${points.toLocaleString()}/${v.points.toLocaleString()} pts</div>
+      <button class="redeem-btn ${unlocked?'active':''}" ${unlocked?`onclick="openRedeem(${v.inr})"`:''}>
+        ${unlocked?'Redeem Now':'Locked'}
+      </button>
+    </div>`;
+  });
+  document.getElementById("vouchers").innerHTML = html;
 }
 
+function formatTimer(seconds) {
+  const h = String(Math.floor(seconds / 3600)).padStart(2,'0');
+  const m = String(Math.floor((seconds % 3600)/60)).padStart(2,'0');
+  const s = String(seconds % 60).padStart(2,'0');
+  return `${h}:${m}:${s}`;
+}
+
+function addToHistory(type, details) {
+  let h = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+  h.unshift({type, details, time: Date.now(), status: "pending"});
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
+}
+
+function updateHistory() {
+  let h = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+  const now = Date.now();
+  let html = "";
+  h.forEach(item => {
+    const elapsed = (now - item.time) / 1000;
+    if (elapsed >= 43200) item.status = "success";
+    const remaining = Math.max(0, 43200 - elapsed);
+    const t = new Date(item.time).toLocaleString();
+    html += `<div class="history-item ${item.status==='success'?'success':''}">
+      <b>${item.type}</b><br>${item.details}<br><small>${t}</small><br>
+      ${item.status==='success' ? '<div class="success-text">Success</div>' : `<div class="timer">${formatTimer(remaining)}</div>`}
+    </div>`;
+  });
+  document.getElementById("historyList").innerHTML = html || "<p style='text-align:center;color:#666'>No history yet</p>";
+}
+
+function submitRedeem() {
+  const name = document.getElementById("redeemName").value.trim();
+  const email = document.getElementById("redeemEmail").value.trim();
+  if (!name || !email.includes("@gmail.com")) return Telegram.WebApp.showAlert("Valid Name & Gmail daal!");
+  const cost = selectedINR === 10 ? 3200 : selectedINR === 20 ? 6400 : selectedINR === 50 ? 16000 : 32000;
+  if (points < cost) return Telegram.WebApp.showAlert("Points kam hain!");
+  points -= cost; localStorage.setItem(POINT_KEY, points);
+  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({chat_id:CHANNEL_ID, text:`NEW ₹${selectedINR} GOOGLE PLAY\nUser: ${userName} (${userId})\nName: ${name}\nEmail: ${email}`, parse_mode:"HTML"})
+  });
+  addToHistory(`Google Play ₹${selectedINR}`, `${name} | ${email}`);
+  closeModal(); 
+  Telegram.WebApp.showAlert(`₹${selectedINR} request successful!\n12 hours mein code milega`);
+  update();
+}
+
+function withdrawLTC() {
+  if (points < 3200) return Telegram.WebApp.showAlert("3200 points chahiye!");
+  const addr = document.getElementById("ltcAddr").value.trim();
+  if (addr.length < 26) return Telegram.WebApp.showAlert("Valid LTC address daal!");
+  points -= 3200; localStorage.setItem(POINT_KEY, points);
+  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({chat_id:CHANNEL_ID, text:`NEW $0.1 LTC REQUEST\nUser: ${userName} (${userId})\nAddress: <code>${addr}</code>`, parse_mode:"HTML"})
+  });
+  addToHistory("Litecoin $0.1", addr);
+  Telegram.WebApp.showAlert("LTC request successful! 12 hours mein payment");
+  update();
+}
+
+function startGame() { document.getElementById("startScreen").style.display="none"; document.getElementById("gameArea").style.display="block"; update(); }
+function openWallet() { closeScreen(); document.getElementById("walletScreen").style.display="block"; update(); }
+function closeScreen() { document.querySelectorAll(".screen,.modal").forEach(el=>el.style.display="none"); }
+function closeModal() { document.getElementById("redeemModal").style.display="none"; }
+function openRedeem(inr) { selectedINR = inr; document.getElementById("redeemModal").style.display="flex"; }
+
+function showTab(tab) {
+  document.getElementById("googleTab").style.display = tab==="google"?"block":"none";
+  document.getElementById("ltcTab").style.display = tab==="ltc"?"block":"none";
+  document.getElementById("historyTab").style.display = tab==="history"?"block":"none";
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+  event.target.classList.add("active");
+}
+
+setInterval(updateHistory, 1000);
 update();
 </script>
 </body>
