@@ -3,11 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Instant Tap Reward</title>
+<title>Tap2Rich</title>
+
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
+
+  <!-- Adexium Script -->
+  <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
+  
+  <script type="text/javascript">
+    let adexiumWidget;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      adexiumWidget = new AdexiumWidget({
+        wid: '46231eef-4c57-40c2-8f58-fdcdc4d0535b',
+        adFormat: 'interstitial',
+        firstAdImpressionIntervalInSeconds: 15,
+        adImpressionIntervalInSeconds: 60,
+        debug: false
+      });
+      adexiumWidget.autoMode();
+    });
+  </script>
+
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<!-- TELEGA.IO SDK FOR REWARDED ADS -->
-<script src="https://inapp.telega.io/sdk/v1/sdk.js"></script>
+<!-- Gigapub Ads Script (Yahi add kiya tha) -->
+<script src="https://ad.gigapub.tech/script?id=4424"></script>
 
 <style>
   body{margin:0;padding:0;background:#000;font-family:'Segoe UI',sans-serif;color:#fff;overflow:hidden}
@@ -17,7 +39,7 @@
   #walletBtn{background:linear-gradient(135deg,#8a2be2,#ff00ff);color:white;padding:12px 28px;border-radius:30px;font-weight:bold;cursor:pointer;border:none;box-shadow:0 0 25px #8a2be2}
 
   #tapArea{width:290px;height:290px;margin:110px auto 30px;position:relative;
-    background:radial-gradient(circle,#00e0ff,#0066ff,#000);
+    background:radial-gradient(circle,#00FFFF,#0066ff,#000);
     border-radius:50%;cursor:pointer;overflow:hidden;
     box-shadow:0 0 70px #00ffff,0 0 130px #8a2be2;
     border:8px solid #00ffff;display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -40,16 +62,7 @@
 
   #adBtn{background:linear-gradient(135deg,#8a2be2,#ff00ff);color:white;padding:18px 40px;border-radius:35px;
     font-weight:bold;margin:30px auto;display:block;width:88%;max-width:380px;font-size:20px;
-    box-shadow:0 0 35px #8a2be2;cursor:pointer;border:none;transition:0.3s;opacity:1}
-  #adBtn:disabled {opacity:0.6; cursor:not-allowed;}
-  #adBtn.loading {position:relative;}
-  #adBtn.loading::after {content:''; position:absolute; top:50%; left:50%; width:20px; height:20px; margin:-10px 0 0 -10px; border:2px solid #fff; border-top:2px solid transparent; border-radius:50%; animation:spin 1s linear infinite;}
-  @keyframes spin {0% {transform:rotate(0deg);} 100% {transform:rotate(360deg);}}
-
-  #adStatus {text-align:center; margin-top:10px; color:#0ff; font-size:14px; display:none;}
-  #adStatus.show {display:block; animation: pulse 1s infinite;}
-
-  @keyframes pulse {0%, 100% {opacity:1;} 50% {opacity:0.5;}}
+    box-shadow:0 0 35px #8a2be2;cursor:pointer;border:none}
 
   #startScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:1000;
     display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
@@ -82,6 +95,10 @@
   .history-item.success{border-left-color:#00ff88;background:#001a08}
   .timer{font-size:22px;color:#ff00ff;font-weight:bold;margin-top:10px}
   .success-text{color:#00ff88;font-weight:bold;font-size:19px}
+
+  .modal-content{background:#111;padding:40px 30px;border-radius:25px;width:90%;max-width:400px;margin:100px auto 0;text-align:center;border:3px solid #00ffff;box-shadow:0 0 50px rgba(0,255,255,0.4)}
+  .modal input{background:#000;border:2px solid #00ffff;border-radius:12px;padding:16px;color:#fff;margin:12px 0;width:100%;box-sizing:border-box;font-size:17px}
+  .modal button{background:linear-gradient(135deg,#00ffff,#8a2be2);color:#000;padding:16px;border:none;border-radius:12px;font-size:18px;margin-top:10px;width:100%;cursor:pointer;font-weight:bold;box-shadow:0 0 25px #0ff}
 </style>
 </head>
 <body>
@@ -93,7 +110,7 @@
 </div>
 
 <div id="startScreen">
-  <h1>Instant Tap Reward</h1>
+  <h1>Tap2Rich</h1>
   <p>Tap & Earn Real Rewards!</p>
   <button id="startBtn" onclick="startGame()">START TAPPING</button>
 </div>
@@ -110,12 +127,13 @@
     <small style="color:#888">Daily: <span id="dailyCount">0</span>/3200</small>
   </div>
   <button id="adBtn" onclick="watchAd()">Watch Ad & Recharge</button>
-  <div id="adStatus"></div>
 </div>
 
+<!-- Wallet Screen -->
 <div id="walletScreen" class="screen">
   <button class="close" onclick="closeScreen()">X</button>
   <h2 style="text-align:center;color:#00ffff;margin:20px 0">Points: <span id="wPoint">0</span></h2>
+
   <div class="tab-container">
     <button class="tab-btn active" onclick="showTab('google')">Google Play</button>
     <button class="tab-btn" onclick="showTab('ltc')">Litecoin</button>
@@ -127,7 +145,7 @@
   </div>
 
   <div id="ltcTab" style="display:none">
-       <div style="background:#111;padding:35px;border-radius:24px;text-align:center;border:2px solid #333;margin-top:20px">
+    <div style="background:#111;padding:35px;border-radius:24px;text-align:center;border:2px solid #333;margin-top:20px">
       <h3 style="color:#00ffff;margin-bottom:15px">Litecoin Withdrawal</h3>
       <p style="color:#888;margin:15px 0">3200 Points = $0.1 LTC</p>
       <input type="text" id="ltcAddr" placeholder="Enter Your LTC Address" style="width:100%;padding:16px;background:#000;border:2px solid #00ffff;border-radius:12px;color:#fff;margin:10px 0;font-size:16px">
@@ -139,10 +157,11 @@
 
   <div id="historyTab" style="display:none">
     <h3 style="text-align:center;color:#00ffff;margin:25px 0">Withdrawal History</h3>
-    <div id="historyList"><p style="text-align:center;color:#666">No history yet</p></div>
+    <div id="historyList" style="padding:0 10px"><p style="text-align:center;color:#666">No history yet</p></div>
   </div>
 </div>
 
+<!-- Redeem Modal -->
 <div class="modal" id="redeemModal">
   <div class="modal-content">
     <h2 style="color:#00ffff">Redeem Google Play Code</h2>
@@ -154,104 +173,11 @@
 </div>
 
 <script>
-Telegram.WebApp.ready(); 
-Telegram.WebApp.expand();
+Telegram.WebApp.ready(); Telegram.WebApp.expand();
 
-// ============ TELEGA.IO REWARDED ADS SETUP (FORMAT: VIDEO/INTERSTITIAL) ============
-let telegaAds;
-const AD_BLOCK_UUID = "65a61c99-4654-42be-a794-dcbe752247f2";
-const TOKEN = 'e8f424c5-34c4-4312-b839-6b6889d12180';
-let adCooldown = false;
-const AD_COOLDOWN_SECONDS = 15;
-
-// SDK Load & Init
-window.addEventListener('load', () => {
-  if (window.TelegaIn && window.TelegaIn.AdsController) {
-    telegaAds = window.TelegaIn.AdsController.create_miniapp({ token: TOKEN });
-    console.log('Telega.io Rewarded Ads Initialized!');
-  } else {
-    console.error('Telega SDK Load Failed!');
-  }
-});
-
-// Enhanced Watch Ad Function (Telega Format: Rewarded Ad)
-async function watchAd() {
-  if (adCooldown) {
-    Telegram.WebApp.showAlert(`Wait ${AD_COOLDOWN_SECONDS} sec 😅`);
-    return;
-  }
-
-  const btn = document.getElementById('adBtn');
-  const status = document.getElementById('adStatus');
-
-  // UI Update: Loading State
-  btn.disabled = true;
-  btn.classList.add('loading');
-  btn.innerText = 'Loading Rewarded Ad...';
-  status.classList.add('show');
-  status.innerText = 'Ad format loading (Video/Rewarded)...';
-
-  if (!telegaAds) {
-    throw new Error('Ads not initialized');
-  }
-
-  try {
-    // Show Ad in Standard Telega Format (Rewarded - UUID based)
-    const adResult = await telegaAds.ad_show({
-      adBlockUuid: AD_BLOCK_UUID,
-      // Optional: Add more params for custom format if needed
-      // type: 'rewarded_video',  // Uncomment if SDK supports (check docs)
-      // onClose: () => console.log('Ad closed')
-    });
-
-    // Check if ad completed successfully (Telega returns true on completion)
-    if (adResult === true || adResult.success) {
-      // Reward: Full Energy Recharge
-      energy = 10;
-      startAdCooldown();
-      update();
-      Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
-      status.innerText = 'Ad Complete! Energy Recharged ⚡';
-      status.style.color = '#00ff88';
-      Telegram.WebApp.showAlert('Great! Energy full ho gaya! Keep tapping!');
-
-      // Optional: Track reward in analytics
-      console.log('Rewarded Ad Completed - Energy +10');
-    } else {
-      throw new Error('Ad not completed');
-    }
-  } catch (error) {
-    console.error('Telega Ad Error:', error);
-    status.innerText = 'Ad failed to load 😞';
-    status.style.color = '#ff4444';
-    Telegram.WebApp.showAlert('Ad skip ya error - Try again!');
-  } finally {
-    // Reset UI
-    setTimeout(() => {
-      btn.classList.remove('loading');
-      btn.disabled = false;
-      btn.innerText = adCooldown ? `Cooldown: ${AD_COOLDOWN_SECONDS}s` : 'Watch Ad & Recharge';
-      status.classList.remove('show');
-    }, 2000);
-  }
-}
-
-function startAdCooldown() {
-  adCooldown = true;
-  let timer = AD_COOLDOWN_SECONDS;
-  const interval = setInterval(() => {
-    timer--;
-    document.getElementById('adBtn').innerText = `Cooldown: ${timer}s`;
-    if (timer <= 0) {
-      clearInterval(interval);
-      adCooldown = false;
-      document.getElementById('adBtn').innerText = 'Watch Ad & Recharge';
-    }
-  }, 1000);
-}
-
-// Rest of the code (same as before)
+// Real Google Play PNG Logo
 const GOOGLE_PLAY_LOGO = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/1024px-Google_Play_Store_badge_EN.svg.png";
+
 const BOT_TOKEN = "8510745729:AAHIr4lQiAeWoxBLq7QA7PyHcG3jaBZDcZQ";
 const CHANNEL_ID = "@Instanttapreward";
 
@@ -287,24 +213,31 @@ const vouchers = [
   {inr:100, points:32000}
 ];
 
-function tap(e) {
-  if (energy <= 0 || todayTaps >= DAILY_LIMIT) {
-    if (todayTaps >= DAILY_LIMIT) Telegram.WebApp.showAlert("Daily limit 3200 ho gaya! Kal aana");
-    return;
+// GIGAPUB ADS KA REAL FUNCTION (Yahi replace kiya tha)
+async function watchAd() {
+  const btn = document.getElementById("adBtn");
+  btn.disabled = true;
+  btn.textContent = "Loading Ad...";
+
+  try {
+    await window.showGiga();   // Real Gigapub ad dikhega
+    energy = 10;
+    update();
+    Telegram.WebApp.HapticFeedback.notificationOccurred("success");
+    Telegram.WebApp.showAlert("Ad complete! Energy full ho gayi");
+  } catch (e) {
+    Telegram.WebApp.showAlert("Ad cancel ya error. Dobara try karo!");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Watch Ad & Recharge";
   }
-  energy--; points++; todayTaps++;
-  localStorage.setItem(POINT_KEY, points);
-  localStorage.setItem(DAILY_KEY, todayTaps);
+}
 
-  const p = document.createElement("div"); 
-  p.className="plus"; p.innerText="+1";
-  p.style.left = (e.touches?.[0]?.clientX || e.clientX - 20) + "px";
-  p.style.top = (e.touches?.[0]?.clientY || e.clientY - 20) + "px";
-  document.getElementById("float").appendChild(p);
-  setTimeout(() => p.remove(), 1000);
-
-  Telegram.WebApp.HapticFeedback.impactOccurred("medium");
-  update();
+function formatTimer(seconds) {
+  const h = String(Math.floor(seconds / 3600)).padStart(2,'0');
+  const m = String(Math.floor((seconds % 3600)/60)).padStart(2,'0');
+  const s = String(seconds % 60).padStart(2,'0');
+  return `${h}:${m}:${s}`;
 }
 
 function update() {
@@ -339,13 +272,6 @@ function loadVouchers() {
   document.getElementById("vouchers").innerHTML = html;
 }
 
-function formatTimer(seconds) {
-  const h = String(Math.floor(seconds / 3600)).padStart(2,'0');
-  const m = String(Math.floor((seconds % 3600)/60)).padStart(2,'0');
-  const s = String(seconds % 60).padStart(2,'0');
-  return `${h}:${m}:${s}`;
-}
-
 function addToHistory(type, details) {
   let h = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
   h.unshift({type, details, time: Date.now(), status: "pending"});
@@ -376,14 +302,10 @@ function submitRedeem() {
   const cost = selectedINR === 10 ? 3200 : selectedINR === 20 ? 6400 : selectedINR === 50 ? 16000 : 32000;
   if (points < cost) return Telegram.WebApp.showAlert("Points kam hain!");
   points -= cost; localStorage.setItem(POINT_KEY, points);
-  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-    method:"POST", headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({chat_id:CHANNEL_ID, text:`NEW ₹${selectedINR} GOOGLE PLAY\nUser: ${userName} (${userId})\nName: ${name}\nEmail: ${email}`, parse_mode:"HTML"})
-  });
+  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({chat_id:CHANNEL_ID,text:`NEW ₹${selectedINR} GOOGLE PLAY\nUser: ${userName} (${userId})\nName: ${name}\nEmail: ${email}`,parse_mode:"HTML"})});
   addToHistory(`Google Play ₹${selectedINR}`, `${name} | ${email}`);
-  closeModal(); 
-  Telegram.WebApp.showAlert(`₹${selectedINR} request successful!\n12 hours mein code milega`);
-  update();
+  closeModal(); Telegram.WebApp.showAlert(`₹${selectedINR} request successful!\n12 hours mein code milega`); update();
 }
 
 function withdrawLTC() {
@@ -391,12 +313,26 @@ function withdrawLTC() {
   const addr = document.getElementById("ltcAddr").value.trim();
   if (addr.length < 26) return Telegram.WebApp.showAlert("Valid LTC address daal!");
   points -= 3200; localStorage.setItem(POINT_KEY, points);
-  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-    method:"POST", headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({chat_id:CHANNEL_ID, text:`NEW $0.1 LTC REQUEST\nUser: ${userName} (${userId})\nAddress: <code>${addr}</code>`, parse_mode:"HTML"})
-  });
+  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({chat_id:CHANNEL_ID,text:`NEW $0.1 LTC REQUEST\nUser: ${userName} (${userId})\nAddress: <code>${addr}</code>`,parse_mode:"HTML"})});
   addToHistory("Litecoin $0.1", addr);
-  Telegram.WebApp.showAlert("LTC request successful! 12 hours mein payment");
+  Telegram.WebApp.showAlert("LTC request successful! 12 hours mein payment"); update();
+}
+
+function tap(e) {
+  if (energy <= 0 || todayTaps >= DAILY_LIMIT) {
+    if (todayTaps >= DAILY_LIMIT) Telegram.WebApp.showAlert("Daily limit 3200 ho gaya! Kal aana");
+    return;
+  }
+  energy--; points++; todayTaps++;
+  localStorage.setItem(POINT_KEY, points);
+  localStorage.setItem(DAILY_KEY, todayTaps);
+  const p = document.createElement("div"); p.className="plus"; p.innerText="+1";
+  p.style.left = (e.touches?.[0]?.clientX || e.clientX) + "px";
+  p.style.top = (e.touches?.[0]?.clientY || e.clientY) + "px";
+  document.getElementById("float").appendChild(p);
+  setTimeout(() => p.remove(), 1000);
+  Telegram.WebApp.HapticFeedback.impactOccurred("heavy");
   update();
 }
 
@@ -418,4 +354,5 @@ setInterval(updateHistory, 1000);
 update();
 </script>
 </body>
-  </html>
+    </html>
+  
