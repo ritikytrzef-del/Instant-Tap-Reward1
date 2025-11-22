@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Instant Tap Reward</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<!-- ✅ ADEXORA ADS SCRIPT -->
-<script src="https://adexora.com/cdn/ads.js?id=1042"></script>
+
+<!-- TELEGA.IO SDK FOR REWARDED ADS -->
+<script src="https://inapp.telega.io/sdk/v1/sdk.js"></script>
 
 <style>
   body{margin:0;padding:0;background:#000;font-family:'Segoe UI',sans-serif;color:#fff;overflow:hidden}
@@ -40,6 +41,15 @@
   #adBtn{background:linear-gradient(135deg,#8a2be2,#ff00ff);color:white;padding:18px 40px;border-radius:35px;
     font-weight:bold;margin:30px auto;display:block;width:88%;max-width:380px;font-size:20px;
     box-shadow:0 0 35px #8a2be2;cursor:pointer;border:none;transition:0.3s;opacity:1}
+  #adBtn:disabled {opacity:0.6; cursor:not-allowed;}
+  #adBtn.loading {position:relative;}
+  #adBtn.loading::after {content:''; position:absolute; top:50%; left:50%; width:20px; height:20px; margin:-10px 0 0 -10px; border:2px solid #fff; border-top:2px solid transparent; border-radius:50%; animation:spin 1s linear infinite;}
+  @keyframes spin {0% {transform:rotate(0deg);} 100% {transform:rotate(360deg);}}
+
+  #adStatus {text-align:center; margin-top:10px; color:#0ff; font-size:14px; display:none;}
+  #adStatus.show {display:block; animation: pulse 1s infinite;}
+
+  @keyframes pulse {0%, 100% {opacity:1;} 50% {opacity:0.5;}}
 
   #startScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:1000;
     display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
@@ -100,9 +110,9 @@
     <small style="color:#888">Daily: <span id="dailyCount">0</span>/3200</small>
   </div>
   <button id="adBtn" onclick="watchAd()">Watch Ad & Recharge</button>
+  <div id="adStatus"></div>
 </div>
 
-<!-- Wallet & Other Screens (same as before) -->
 <div id="walletScreen" class="screen">
   <button class="close" onclick="closeScreen()">X</button>
   <h2 style="text-align:center;color:#00ffff;margin:20px 0">Points: <span id="wPoint">0</span></h2>
@@ -147,6 +157,100 @@
 Telegram.WebApp.ready(); 
 Telegram.WebApp.expand();
 
+// ============ TELEGA.IO REWARDED ADS SETUP (FORMAT: VIDEO/INTERSTITIAL) ============
+let telegaAds;
+const AD_BLOCK_UUID = "65a61c99-4654-42be-a794-dcbe752247f2";
+const TOKEN = 'e8f424c5-34c4-4312-b839-6b6889d12180';
+let adCooldown = false;
+const AD_COOLDOWN_SECONDS = 15;
+
+// SDK Load & Init
+window.addEventListener('load', () => {
+  if (window.TelegaIn && window.TelegaIn.AdsController) {
+    telegaAds = window.TelegaIn.AdsController.create_miniapp({ token: TOKEN });
+    console.log('Telega.io Rewarded Ads Initialized!');
+  } else {
+    console.error('Telega SDK Load Failed!');
+  }
+});
+
+// Enhanced Watch Ad Function (Telega Format: Rewarded Ad)
+async function watchAd() {
+  if (adCooldown) {
+    Telegram.WebApp.showAlert(`Wait ${AD_COOLDOWN_SECONDS} sec 😅`);
+    return;
+  }
+
+  const btn = document.getElementById('adBtn');
+  const status = document.getElementById('adStatus');
+
+  // UI Update: Loading State
+  btn.disabled = true;
+  btn.classList.add('loading');
+  btn.innerText = 'Loading Rewarded Ad...';
+  status.classList.add('show');
+  status.innerText = 'Ad format loading (Video/Rewarded)...';
+
+  if (!telegaAds) {
+    throw new Error('Ads not initialized');
+  }
+
+  try {
+    // Show Ad in Standard Telega Format (Rewarded - UUID based)
+    const adResult = await telegaAds.ad_show({
+      adBlockUuid: AD_BLOCK_UUID,
+      // Optional: Add more params for custom format if needed
+      // type: 'rewarded_video',  // Uncomment if SDK supports (check docs)
+      // onClose: () => console.log('Ad closed')
+    });
+
+    // Check if ad completed successfully (Telega returns true on completion)
+    if (adResult === true || adResult.success) {
+      // Reward: Full Energy Recharge
+      energy = 10;
+      startAdCooldown();
+      update();
+      Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+      status.innerText = 'Ad Complete! Energy Recharged ⚡';
+      status.style.color = '#00ff88';
+      Telegram.WebApp.showAlert('Great! Energy full ho gaya! Keep tapping!');
+
+      // Optional: Track reward in analytics
+      console.log('Rewarded Ad Completed - Energy +10');
+    } else {
+      throw new Error('Ad not completed');
+    }
+  } catch (error) {
+    console.error('Telega Ad Error:', error);
+    status.innerText = 'Ad failed to load 😞';
+    status.style.color = '#ff4444';
+    Telegram.WebApp.showAlert('Ad skip ya error - Try again!');
+  } finally {
+    // Reset UI
+    setTimeout(() => {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      btn.innerText = adCooldown ? `Cooldown: ${AD_COOLDOWN_SECONDS}s` : 'Watch Ad & Recharge';
+      status.classList.remove('show');
+    }, 2000);
+  }
+}
+
+function startAdCooldown() {
+  adCooldown = true;
+  let timer = AD_COOLDOWN_SECONDS;
+  const interval = setInterval(() => {
+    timer--;
+    document.getElementById('adBtn').innerText = `Cooldown: ${timer}s`;
+    if (timer <= 0) {
+      clearInterval(interval);
+      adCooldown = false;
+      document.getElementById('adBtn').innerText = 'Watch Ad & Recharge';
+    }
+  }, 1000);
+}
+
+// Rest of the code (same as before)
 const GOOGLE_PLAY_LOGO = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/1024px-Google_Play_Store_badge_EN.svg.png";
 const BOT_TOKEN = "8510745729:AAHIr4lQiAeWoxBLq7QA7PyHcG3jaBZDcZQ";
 const CHANNEL_ID = "@Instanttapreward";
@@ -167,10 +271,6 @@ let todayTaps = 0;
 let selectedINR = 0;
 const DAILY_LIMIT = 3200;
 
-// Cooldown for ad (10 seconds)
-let lastAdTime = 0;
-const AD_COOLDOWN = 10;
-
 const today = new Date().toISOString().split('T')[0];
 if (localStorage.getItem(DATE_KEY) !== today) {
   todayTaps = 0;
@@ -187,42 +287,6 @@ const vouchers = [
   {inr:100, points:32000}
 ];
 
-// ✅ PERFECT ADEXORA REWARDED AD FUNCTION
-function watchAd() {
-  const now = Date.now();
-  if (now - lastAdTime < AD_COOLDOWN * 1000) {
-    const remain = Math.ceil((AD_COOLDOWN * 1000 - (now - lastAdTime)) / 1000);
-    Telegram.WebApp.showAlert(`Thoda wait karo 😅\n${remain} sec baad try karo`);
-    return;
-  }
-
-  const btn = document.getElementById("adBtn");
-  btn.disabled = true;
-  btn.innerText = "Ad Load Ho Raha...";
-  btn.style.opacity = "0.7";
-
-  window.showAdexora()
-    .then(() => {
-      // ✅ Ad successfully complete hua
-      energy = 10;
-      lastAdTime = Date.now();
-      update();
-      Telegram.WebApp.HapticFeedback.impactOccurred("heavy");
-      Telegram.WebApp.showAlert("Ad Complete! ⚡ Energy Full Ho Gaya!");
-    })
-    .catch((e) => {
-      // ❌ Skip, close, ya error
-      console.log("Adexora Error:", e);
-      Telegram.WebApp.showAlert("Ad skip kiya ya error hua 😞\nEnergy nahi milegi");
-    })
-    .finally(() => {
-      btn.disabled = false;
-      btn.innerText = "Watch Ad & Recharge";
-      btn.style.opacity = "1";
-    });
-}
-
-// Baaki sab functions same hi hain (tap, wallet, redeem, etc.)
 function tap(e) {
   if (energy <= 0 || todayTaps >= DAILY_LIMIT) {
     if (todayTaps >= DAILY_LIMIT) Telegram.WebApp.showAlert("Daily limit 3200 ho gaya! Kal aana");
@@ -354,4 +418,4 @@ setInterval(updateHistory, 1000);
 update();
 </script>
 </body>
-</html>
+  </html>
