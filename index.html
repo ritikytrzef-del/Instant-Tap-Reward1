@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Tap2Rich</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
 
 <style>
   body{margin:0;padding:0;background:#000;font-family:'Segoe UI',sans-serif;color:#fff;overflow:hidden}
@@ -63,11 +62,6 @@
   .redeem-btn{background:#333;color:#888;padding:14px;border-radius:16px;width:85%;margin:10px auto;display:block;font-weight:bold;font-size:17px;cursor:not-allowed;border:none}
   .redeem-btn.active{background:linear-gradient(135deg,#00ffff,#8a2be2);color:#000;cursor:pointer;box-shadow:0 0 30px #0ff}
 
-  .history-item{background:#111;padding:18px;margin:15px 0;border-radius:16px;border-left:6px solid #00ffff}
-  .history-item.success{border-left-color:#00ff88;background:#001a08}
-  .timer{font-size:22px;color:#ff00ff;font-weight:bold;margin-top:10px}
-  .success-text{color:#00ff88;font-weight:bold;font-size:19px}
-
   .modal-content{background:#111;padding:40px 30px;border-radius:25px;width:90%;max-width:400px;margin:100px auto 0;text-align:center;border:3px solid #00ffff;box-shadow:0 0 50px rgba(0,255,255,0.4)}
   .modal input{background:#000;border:2px solid #00ffff;border-radius:12px;padding:16px;color:#fff;margin:12px 0;width:100%;box-sizing:border-box;font-size:17px}
   .modal button{background:linear-gradient(135deg,#00ffff,#8a2be2);color:#000;padding:16px;border:none;border-radius:12px;font-size:18px;margin-top:10px;width:100%;cursor:pointer;font-weight:bold;box-shadow:0 0 25px #0ff}
@@ -101,7 +95,7 @@
   <button id="adBtn" onclick="watchAd()">Watch Ad & Recharge Energy</button>
 </div>
 
-<!-- Wallet Screen - Only Google Play -->
+<!-- Wallet Screen -->
 <div id="walletScreen" class="screen">
   <button class="close" onclick="closeScreen()">X</button>
   <h2 style="text-align:center;color:#00ffff;margin:30px 0">Your Points: <span id="wPoint">0</span></h2>
@@ -124,17 +118,6 @@
 <script>
 Telegram.WebApp.ready();
 Telegram.WebApp.expand();
-
-// AdsGram Setup (Block ID 18974)
-let AdController = null;
-window.addEventListener("load", () => {
-  if (window.Adsgram) {
-    AdController = window.Adsgram.init({
-      blockId: "18974",
-      debug: false
-    });
-  }
-});
 
 // Bot & Channel
 const BOT_TOKEN = "8510745729:AAHIr4lQiAeWoxBLq7QA7PyHcG3jaBZDcZQ";
@@ -245,31 +228,34 @@ function tap(e) {
   update();
 }
 
+// Telega.io Ad - Energy Recharge + Revenue
 function watchAd() {
   const btn = document.getElementById("adBtn");
-  if (!AdController) {
-    Telegram.WebApp.showAlert("Ad network load nahi hua, refresh karo");
+  
+  if (!window.TelegaIn || !ads) {
+    Telegram.WebApp.showAlert("Ad loading mein thoda time lag raha hai, refresh karo ya thodi der baad try karo");
     return;
   }
 
   btn.disabled = true;
   btn.textContent = "Loading Ad...";
 
-  AdController.show()
-    .then((result) => {
-      if (result.done) {
-        energy = 10;
-        update();
-        Telegram.WebApp.showAlert("Ad dekh liya! Energy full ho gayi!");
-      }
-    })
-    .catch(() => {
-      Telegram.WebApp.showAlert("Ad skip ho gaya ya available nahi tha. Thodi der baad try karo");
-    })
-    .finally(() => {
-      btn.disabled = false;
-      btn.textContent = "Watch Ad & Recharge Energy";
-    });
+  ads.ad_show({
+    adBlockUuid: "ca69313f-b1bf-46db-abc1-863a6dba48f3"
+  }).then(() => {
+    energy = 10;
+    points += 50; // Bonus motivation
+    localStorage.setItem(POINT_KEY, points);
+    update();
+    Telegram.WebApp.showAlert("Ad dekh liya! Energy full + 50 Bonus Points!");
+    Telegram.WebApp.HapticFeedback.notificationOccurred("success");
+  }).catch((error) => {
+    console.log("Ad failed or skipped:", error);
+    Telegram.WebApp.showAlert("Ad available nahi tha ya skip ho gaya. Thodi der baad try karo");
+  }).finally(() => {
+    btn.disabled = false;
+    btn.textContent = "Watch Ad & Recharge Energy";
+  });
 }
 
 function startGame() { 
@@ -299,5 +285,14 @@ function openRedeem(inr) {
 
 update();
 </script>
+
+<!-- Telega.io SDK -->
+<script src="https://inapp.telega.io/sdk/v1/sdk.js"></script>
+<script>
+  const ads = window.TelegaIn.AdsController.create_miniapp({
+    token: 'e8f424c5-34c4-4312-b839-6b6889d12180'
+  });
+</script>
+
 </body>
-  </html>
+</html>
