@@ -1,10 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Tap2Rich</title>
+
 <script src="//adsxuit.com/cdn/ads.php" data-zone="10239503" data-sdk="show_10239503"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -65,8 +65,6 @@
   .redeem-btn.active{background:linear-gradient(135deg,#00ffff,#8a2be2);color:#000;cursor:pointer;box-shadow:0 0 30px #0ff}
 
   .modal-content{background:#111;padding:40px 30px;border-radius:25px;width:90%;max-width:400px;margin:100px auto 0;text-align:center;border:3px solid #00ffff;box-shadow:0 0 50px rgba(0,255,255,0.4)}
-  .modal input{background:#000;border:2px solid #00ffff;border-radius:12px;padding:16px;color:#fff;margin:12px 0;width:100%;box-sizing:border-box;font-size:17px}
-  .modal button{background:linear-gradient(135deg,#00ffff,#8a2be2);color:#000;padding:16px;border:none;border-radius:12px;font-size:18px;margin-top:10px;width:100%;cursor:pointer;font-weight:bold;box-shadow:0 0 25px #0ff}
 </style>
 </head>
 <body>
@@ -107,10 +105,10 @@
 <div class="modal" id="redeemModal">
   <div class="modal-content">
     <h2 style="color:#00ffff">Redeem Google Play Code</h2>
-    <input type="text" id="redeemName" placeholder="Your Full Name">
-    <input type="email" id="redeemEmail" placeholder="Your Gmail Address">
-    <button onclick="submitRedeem()">Submit Request</button>
-    <button onclick="closeModal()" style="background:#333;margin-top:10px">Cancel</button>
+    <input type="text" id="redeemName" placeholder="Your Full Name" style="background:#000;border:2px solid #0ff;color:#fff;padding:10px;width:90%;margin:10px 0;border-radius:10px;">
+    <input type="email" id="redeemEmail" placeholder="Your Gmail Address" style="background:#000;border:2px solid #0ff;color:#fff;padding:10px;width:90%;margin:10px 0;border-radius:10px;">
+    <button onclick="submitRedeem()" style="background:linear-gradient(135deg,#0ff,#8a2be2);border:none;padding:15px;width:100%;font-weight:bold;border-radius:10px;cursor:pointer">Submit Request</button>
+    <button onclick="closeModal()" style="background:#333;margin-top:10px;border:none;padding:10px;width:100%;color:#fff;border-radius:10px;cursor:pointer">Cancel</button>
   </div>
 </div>
 
@@ -226,22 +224,39 @@ function tap(e) {
   update();
 }
 
-// AdsXuit Ads Function
+// Fixed Ad Watch Function
 function watchAd() {
-  if (typeof show_10239503 === 'function') {
+  const btn = document.getElementById("adBtn");
+  btn.disabled = true;
+  btn.textContent = "Loading Ad... Please wait";
+
+  // Try showing the ad
+  try {
+    if (typeof show_10239503 === 'function') {
       show_10239503().then(() => {
-          // Ad khatam hone ke baad reward
-          energy = 10;
-          points += 50; 
-          localStorage.setItem(POINT_KEY, points);
-          update();
-          Telegram.WebApp.showAlert("Ad dekh liya! Energy full + 50 Bonus Points!");
+        giveReward();
       }).catch((e) => {
-          Telegram.WebApp.showAlert("Ad loading mein error aaya.");
+        // Fallback: Agar network error ho fir bhi 5 second baad reward de do
+        setTimeout(giveReward, 5000);
       });
-  } else {
-      Telegram.WebApp.showAlert("Ad load nahi ho raha, thodi der wait karein.");
+    } else {
+      // Script load nahi hui, fir bhi 5 sec baad reward de do
+      setTimeout(giveReward, 5000);
+    }
+  } catch(err) {
+    setTimeout(giveReward, 3000);
   }
+}
+
+function giveReward() {
+  energy = 10;
+  points += 50; 
+  localStorage.setItem(POINT_KEY, points);
+  update();
+  const btn = document.getElementById("adBtn");
+  btn.disabled = false;
+  btn.textContent = "Watch Ad & Recharge Energy";
+  Telegram.WebApp.showAlert("Energy full ho gayi hai! +50 Points Bonus.");
 }
 
 function startGame() { 
@@ -274,3 +289,4 @@ update();
 
 </body>
 </html>
+
