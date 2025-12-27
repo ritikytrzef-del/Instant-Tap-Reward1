@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Tap2Rich</title>
 
-<script src="//adsxuit.com/cdn/ads.php" data-zone="10239503" data-sdk="show_10239503"></script>
+<script src="https://adexora.com/cdn/ads.js?id=1042"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
@@ -56,7 +56,6 @@
   .voucher{background:#111;border-radius:22px;overflow:hidden;border:2px solid #222;text-align:center;box-shadow:0 8px 25px rgba(0,255,255,0.15)}
   .v-header{background:linear-gradient(135deg,#8a2be2,#00ffff);padding:14px 10px;color:#000;font-weight:bold;display:flex;align-items:center;justify-content:center;gap:10px}
   .v-header img{height:28px}
-  .v-header span{font-size:16px}
   .v-amount{font-size:42px;color:#00ffff;margin:12px 0;text-shadow:0 0 20px #00ffff;font-weight:900}
   .progress{height:9px;background:#222;border-radius:5px;overflow:hidden;margin:10px 15px}
   .progress-fill{height:100%;background:linear-gradient(90deg,#00ffff,#8a2be2)}
@@ -98,15 +97,15 @@
 <div id="walletScreen" class="screen">
   <button class="close" onclick="closeScreen()">X</button>
   <h2 style="text-align:center;color:#00ffff;margin:30px 0">Your Points: <span id="wPoint">0</span></h2>
-  <h3 style="text-align:center;color:#0ff;margin:20px 0">Redeem Google Play Gift Cards</h3>
+  <h3 style="text-align:center;color:#0ff;margin:20px 0">Redeem Gift Cards</h3>
   <div class="voucher-grid" id="vouchers"></div>
 </div>
 
 <div class="modal" id="redeemModal">
   <div class="modal-content">
-    <h2 style="color:#00ffff">Redeem Google Play Code</h2>
-    <input type="text" id="redeemName" placeholder="Your Full Name" style="background:#000;border:2px solid #0ff;color:#fff;padding:10px;width:90%;margin:10px 0;border-radius:10px;">
-    <input type="email" id="redeemEmail" placeholder="Your Gmail Address" style="background:#000;border:2px solid #0ff;color:#fff;padding:10px;width:90%;margin:10px 0;border-radius:10px;">
+    <h2 style="color:#00ffff">Redeem Google Play</h2>
+    <input type="text" id="redeemName" placeholder="Full Name" style="background:#000;border:2px solid #0ff;color:#fff;padding:10px;width:90%;margin:10px 0;border-radius:10px;">
+    <input type="email" id="redeemEmail" placeholder="Gmail Address" style="background:#000;border:2px solid #0ff;color:#fff;padding:10px;width:90%;margin:10px 0;border-radius:10px;">
     <button onclick="submitRedeem()" style="background:linear-gradient(135deg,#0ff,#8a2be2);border:none;padding:15px;width:100%;font-weight:bold;border-radius:10px;cursor:pointer">Submit Request</button>
     <button onclick="closeModal()" style="background:#333;margin-top:10px;border:none;padding:10px;width:100%;color:#fff;border-radius:10px;cursor:pointer">Cancel</button>
   </div>
@@ -167,8 +166,7 @@ function loadVouchers() {
     const unlocked = points >= v.points;
     html += `<div class="voucher">
       <div class="v-header">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/1024px-Google_Play_Store_badge_EN.svg.png" alt="Google Play">
-        <span>₹${v.inr} Gift Card</span>
+        <span style="color:#000">₹${v.inr} Gift Card</span>
       </div>
       <div class="v-amount">₹${v.inr}</div>
       <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
@@ -181,35 +179,9 @@ function loadVouchers() {
   document.getElementById("vouchers").innerHTML = html;
 }
 
-function submitRedeem() {
-  const name = document.getElementById("redeemName").value.trim();
-  const email = document.getElementById("redeemEmail").value.trim();
-  if (!name || !email.includes("@gmail.com")) return Telegram.WebApp.showAlert("Valid Name & Gmail daal bhai!");
-  
-  const cost = selectedINR === 10 ? 3200 : selectedINR === 20 ? 6400 : selectedINR === 50 ? 16000 : 32000;
-  if (points < cost) return Telegram.WebApp.showAlert("Points kam hain!");
-
-  points -= cost;
-  localStorage.setItem(POINT_KEY, points);
-
-  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      chat_id: CHANNEL_ID,
-      text: `NEW ₹${selectedINR} GOOGLE PLAY\nUser: ${userName} (${userId})\nName: ${name}\nEmail: ${email}`,
-      parse_mode: "HTML"
-    })
-  });
-
-  Telegram.WebApp.showAlert(`₹${selectedINR} Google Play request successful!\n12 hours mein code milega`);
-  closeModal();
-  update();
-}
-
 function tap(e) {
   if (energy <= 0 || todayTaps >= DAILY_LIMIT) {
-    if (todayTaps >= DAILY_LIMIT) Telegram.WebApp.showAlert("Daily limit 3200 ho gaya! Kal aana");
+    if (todayTaps >= DAILY_LIMIT) Telegram.WebApp.showAlert("Daily limit reached!");
     return;
   }
   energy--; points++; todayTaps++;
@@ -220,43 +192,41 @@ function tap(e) {
   p.style.top = (e.touches?.[0]?.clientY || e.clientY) + "px";
   document.getElementById("float").appendChild(p);
   setTimeout(() => p.remove(), 1000);
-  Telegram.WebApp.HapticFeedback.impactOccurred("heavy");
+  Telegram.WebApp.HapticFeedback.impactOccurred("medium");
   update();
 }
 
-// Fixed Ad Watch Function
+// ✅ Adexora Watch Ad Function
 function watchAd() {
   const btn = document.getElementById("adBtn");
-  btn.disabled = true;
-  btn.textContent = "Loading Ad... Please wait";
-
-  // Try showing the ad
-  try {
-    if (typeof show_10239503 === 'function') {
-      show_10239503().then(() => {
-        giveReward();
-      }).catch((e) => {
-        // Fallback: Agar network error ho fir bhi 5 second baad reward de do
-        setTimeout(giveReward, 5000);
-      });
-    } else {
-      // Script load nahi hui, fir bhi 5 sec baad reward de do
-      setTimeout(giveReward, 5000);
-    }
-  } catch(err) {
-    setTimeout(giveReward, 3000);
+  
+  if (typeof window.showAdexora !== 'function') {
+    Telegram.WebApp.showAlert("Ad is still loading, please wait 2-3 seconds.");
+    return;
   }
-}
 
-function giveReward() {
-  energy = 10;
-  points += 50; 
-  localStorage.setItem(POINT_KEY, points);
-  update();
-  const btn = document.getElementById("adBtn");
-  btn.disabled = false;
-  btn.textContent = "Watch Ad & Recharge Energy";
-  Telegram.WebApp.showAlert("Energy full ho gayi hai! +50 Points Bonus.");
+  btn.disabled = true;
+  btn.textContent = "Showing Ad...";
+
+  window.showAdexora()
+    .then(() => {
+      // ✅ Success: Give Reward
+      energy = 10;
+      points += 50; 
+      localStorage.setItem(POINT_KEY, points);
+      update();
+      Telegram.WebApp.showAlert("Success! Energy Refilled + 50 Bonus Points.");
+      Telegram.WebApp.HapticFeedback.notificationOccurred("success");
+    })
+    .catch(e => {
+      // ❌ Error or Ad skipped
+      console.error("Adexora Error:", e);
+      Telegram.WebApp.showAlert("Ad failed to load or was closed early.");
+    })
+    .finally(() => {
+      btn.disabled = false;
+      btn.textContent = "Watch Ad & Recharge Energy";
+    });
 }
 
 function startGame() { 
@@ -268,7 +238,6 @@ function startGame() {
 function openWallet() { 
   closeScreen(); 
   document.getElementById("walletScreen").style.display="block"; 
-  update(); 
 }
 
 function closeScreen() { 
@@ -284,9 +253,32 @@ function openRedeem(inr) {
   document.getElementById("redeemModal").style.display="flex"; 
 }
 
+function submitRedeem() {
+  const name = document.getElementById("redeemName").value.trim();
+  const email = document.getElementById("redeemEmail").value.trim();
+  if (!name || !email.includes("@gmail.com")) return Telegram.WebApp.showAlert("Invalid details!");
+  
+  const cost = selectedINR === 10 ? 3200 : selectedINR === 20 ? 6400 : selectedINR === 50 ? 16000 : 32000;
+  points -= cost;
+  localStorage.setItem(POINT_KEY, points);
+
+  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      chat_id: CHANNEL_ID,
+      text: `NEW REDEEM: ₹${selectedINR}\nUser: ${userName}\nEmail: ${email}`,
+      parse_mode: "HTML"
+    })
+  });
+
+  Telegram.WebApp.showAlert(`Request submitted for ₹${selectedINR}`);
+  closeModal();
+  update();
+}
+
 update();
 </script>
 
 </body>
 </html>
-
