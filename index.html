@@ -12,7 +12,7 @@
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-        :root { --primary: #00f2fe; --secondary: #4facfe; --bg-dark: #0f172a; --card-bg: #1e293b; --text-main: #f8fafc; --text-dim: #94a3b8; --accent-gradient: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); }
+        :root { --primary: #00f2fe; --bg-dark: #0f172a; --card-bg: #1e293b; --text-main: #f8fafc; --text-dim: #94a3b8; --accent-gradient: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); }
         body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 0 15px 110px 15px; background: var(--bg-dark); color: var(--text-main); min-height: 100vh; }
         .header { padding: 25px 0 15px; display: flex; justify-content: space-between; align-items: center; }
         .brand-name { font-weight: 800; font-size: 18px; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -24,7 +24,7 @@
         .slots-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .slot-item { background: var(--card-bg); padding: 20px; border-radius: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
         .slot-btn { width: 100%; border: none; background: var(--accent-gradient); color: #000; padding: 10px; border-radius: 12px; font-weight: 800; cursor: pointer; margin-top: 10px; }
-        .nav-bar { position: fixed; bottom: 15px; left: 15px; right: 15px; background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px); display: grid; grid-template-columns: 1fr 1fr 1fr; padding: 12px; border-radius: 22px; border: 1px solid rgba(255,255,255,0.1); z-index: 1000; }
+        .nav-bar { position: fixed; bottom: 15px; left: 15px; right: 15px; background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px); display: grid; grid-template-columns: 1fr 1fr; padding: 12px; border-radius: 22px; border: 1px solid rgba(255,255,255,0.1); z-index: 1000; }
         .nav-btn { background: none; border: none; color: var(--text-dim); font-size: 11px; font-weight: 700; text-align: center; cursor: pointer; }
         .nav-btn.active { color: var(--primary); }
         .nav-btn i { font-size: 22px; display: block; margin-bottom: 4px; }
@@ -38,19 +38,19 @@
     <div id="loader">
         <div style="text-align:center;">
             <i class="fa-solid fa-bolt fa-spin" style="font-size:40px; color:var(--primary);"></i>
-            <p style="margin-top:10px; font-weight:bold;">INITIALIZING AD...</p>
+            <p style="margin-top:10px; font-weight:bold;">LOADING REWARD AD...</p>
         </div>
     </div>
 
     <div class="container">
         <div class="header">
-            <div id="user-display-name" style="font-size:14px; font-weight:600; color:var(--text-dim);">User</div>
+            <div id="user-name" style="font-size:14px; font-weight:600; color:var(--text-dim);">User</div>
             <div class="brand-name">INSTANT TAP</div>
         </div>
 
         <div id="home-view" class="view active">
             <div class="card-balance">
-                <div style="font-size:12px; font-weight:700; opacity:0.8;">CURRENT BALANCE</div>
+                <div style="font-size:12px; font-weight:700; opacity:0.8;">CURRENT REWARD</div>
                 <div class="bal-val" id="u-bal">0.0000 USDT</div>
                 <div style="font-weight:700;" id="i-bal">₹ 0.00</div>
             </div>
@@ -91,31 +91,36 @@
             localStorage.setItem('itap_adsxuit', JSON.stringify(db));
         }
 
-        // --- Adsxuit Trigger Logic ---
+        // Adsxuit Integration
         function tapAd(id) {
             if(db.today >= 500) return alert("Daily Limit Reached!");
             
             document.getElementById('loader').style.display = 'flex';
 
-            // Adsxuit uses the function defined in the data-sdk attribute
+            // Checking if SDK function is available to avoid "still loading" error
             if (typeof show_10239503 === 'function') {
                 show_10239503().then(() => {
-                    // Reward logic after ad is shown
                     document.getElementById('loader').style.display = 'none';
                     db.bal += CFG.AD_VAL;
                     db.today++;
                     db.timers[id] = Date.now() + 60000; // 1 min cooldown
                     sync();
                     loadSlots();
-                }).catch((err) => {
+                    alert("Reward Added!");
+                }).catch(() => {
                     document.getElementById('loader').style.display = 'none';
-                    alert("Ad failed to display. Please try again.");
+                    alert("Ad failed to load. Please try again.");
                 });
             } else {
+                // Retry logic if script isn't ready
                 setTimeout(() => {
                     document.getElementById('loader').style.display = 'none';
-                    alert("Ad script is still loading. Tap again in a second.");
-                }, 2000);
+                    if (typeof show_10239503 === 'function') {
+                        tapAd(id);
+                    } else {
+                        alert("Ad script is still loading. Please wait a few seconds.");
+                    }
+                }, 1500);
             }
         }
 
@@ -144,9 +149,10 @@
         }
 
         window.onload = () => { 
-            if(tg.initDataUnsafe.user) document.getElementById('user-display-name').innerText = tg.initDataUnsafe.user.first_name;
+            if(tg.initDataUnsafe.user) document.getElementById('user-name').innerText = tg.initDataUnsafe.user.first_name;
             sync(); 
         };
     </script>
 </body>
 </html>
+
